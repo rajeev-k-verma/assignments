@@ -38,12 +38,57 @@
     - For any other route not defined in the server return 404
 
   Testing the server - run `npm run test-todoServer` command in terminal
- */
-  const express = require('express');
-  const bodyParser = require('body-parser');
-  
-  const app = express();
-  
-  app.use(bodyParser.json());
-  
-  module.exports = app;
+*/
+
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+let todos = [];
+let id = 0;
+
+app.get('/todos', (req, res) => {
+  res.status(200).json(todos);
+})
+
+app.get('/todos/:id', (req, res) => {
+  if(todos.find(todo => todo.id == req.params.id))
+    res.status(200).json(todos.find(todo => todo.id == req.params.id));
+  else
+    res.status(404).send('Not Found');
+})
+
+app.post('/todos', (req, res) => {
+  id++;
+  todos.push({id, ...req.body}); 
+  // we can also use todo1 = {id: id, body: req.body}; but this will create body field
+  // Output: { id: 1, body: { title: 'Buy groceries', description: 'I need to buy milk and eggs' } }
+  // Output: { id: 1, title: 'Buy groceries', description: 'I need to buy milk and eggs' }
+  res.status(201).json({id}); // shorthand for {id: id} is {id} in ES6
+})
+
+app.put('/todos/:id', (req, res) => {
+  if(todos.find(todo => todo.id == req.params.id)){
+    todos = todos.map(todo => todo.id == req.params.id ? {...todo, ...req.body} : todo);
+    res.status(200).send('Updated');
+  }
+  else
+    res.status(404).send('Not Found');
+})
+
+app.delete('/todos/:id', (req, res) => {
+  if(todos.find(todo => todo.id == req.params.id)){
+    todos = todos.filter(todo => todo.id != req.params.id);
+    res.status(200).send('Deleted');
+  }
+  else 
+    res.status(404).send('Not Found');
+})
+
+app.use((req, res) => {
+  res.status(404).send('Not Found');
+})
+
+module.exports = app;
